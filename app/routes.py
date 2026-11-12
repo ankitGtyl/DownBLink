@@ -29,9 +29,9 @@ class MergeRequest(BaseModel):
     is_audio_only: bool = False
     ext: str = "mp4"
 
-@router.get("/", response_class=HTMLResponse)
+@router.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def home_page(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html")
 
 @router.get("/api/detect")
 async def detect_platform_route(url: str = Query(..., description="Target video URL")):
