@@ -44,6 +44,11 @@ def get_ydl_instance() -> yt_dlp.YoutubeDL:
             'ffmpeg_location': FFMPEG_EXE,
             'js_runtimes': {'node': {'path': NODE_EXE}},
             'retries': 2,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'ios'],
+                }
+            },
         }
         _YDL_SINGLETON = yt_dlp.YoutubeDL(opts)
     return _YDL_SINGLETON

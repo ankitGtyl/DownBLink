@@ -69,8 +69,12 @@ async def extract_media_route(payload: ExtractRequest):
             raise HTTPException(status_code=400, detail="Incomplete or truncated video URL. Please make sure the full video link is pasted.")
         if "Unsupported URL" in error_msg:
             raise HTTPException(status_code=400, detail="This URL is not supported or not recognized.")
-        if any(w in error_msg.lower() for w in ["sign in", "login", "logged-in", "cookies", "private", "account"]):
-            raise HTTPException(status_code=403, detail="This content requires account login, cookies, or is private/age-restricted.")
+        if "bot" in error_msg.lower() or "confirm you" in error_msg.lower():
+            raise HTTPException(status_code=429, detail="YouTube bot protection triggered on cloud host. Please try another video or try again in a few moments.")
+        if any(w in error_msg.lower() for w in ["private video", "sign in to view", "members-only", "age-restricted", "this video is private"]):
+            raise HTTPException(status_code=403, detail="This video is private, members-only, or age-restricted.")
+        if any(w in error_msg.lower() for w in ["sign in", "login", "logged-in", "cookies", "account"]):
+            raise HTTPException(status_code=403, detail="This content requires account login, cookies, or is restricted.")
         raise HTTPException(status_code=400, detail=f"Extraction error: {error_msg}")
 
 @router.get("/api/stream")
