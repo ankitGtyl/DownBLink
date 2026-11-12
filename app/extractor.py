@@ -352,6 +352,135 @@ def extract_terabox(url: str) -> Dict[str, Any]:
         }
     }
 
+INVIDIOUS_INSTANCES = [
+    "https://yt.chocolatemoo53.com",
+    "https://invidious.nerdvpn.de",
+    "https://inv.tux.pizza",
+    "https://invidious.jing.rocks"
+]
+
+def extract_youtube_fallback(url: str) -> Dict[str, Any]:
+    """Fallback YouTube extractor via distributed Invidious API for cloud hosts blocked by bot protection."""
+    m = re.search(r'(?:shorts/|v=|youtu\.be/|embed/)([a-zA-Z0-9_-]{11})', url)
+    if not m:
+        raise ValueError("Invalid YouTube URL")
+    vid_id = m.group(1)
+
+    for inst in INVIDIOUS_INSTANCES:
+        try:
+            with httpx.Client(timeout=8.0, follow_redirects=True) as client:
+                r = client.get(f"{inst}/api/v1/videos/{vid_id}")
+                if r.status_code != 200:
+                    continue
+                d = r.json()
+                title = d.get('title') or 'YouTube Video'
+                uploader = d.get('author') or 'YouTube Creator'
+                duration = d.get('lengthSeconds', 0)
+                views = d.get('viewCount')
+                thumbs = d.get('videoThumbnails', [])
+                best_thumb = thumbs[0].get('url') if thumbs else f"https://img.youtube.com/vi/{vid_id}/maxresdefault.jpg"
+
+                progressive_list = []
+                video_merged_list = []
+                audio_only_list = []
+
+                # Progressive formatStreams
+                for f in d.get('formatStreams', []):
+                    direct_url = f.get('url', '')
+                    if not direct_url:
+                        continue
+                    res_label = f.get('qualityLabel') or f.get('resolution') or '360p'
+                    size = f.get('size') or f.get('clen')
+                    progressive_list.append({
+                        "format_id": str(f.get('itag', 'prog')),
+                        "ext": f.get('container') or 'mp4',
+                        "resolution": res_label,
+                        "filesize": int(size) if size and str(size).isdigit() else None,
+                        "filesize_formatted": format_filesize(int(size)) if size and str(size).isdigit() else "Direct Stream",
+                        "direct_url": direct_url,
+                        "has_audio": True,
+                        "is_merge": False,
+                        "note": "Progressive (Audio Included)"
+                    })
+
+                # Audio adaptiveFormats
+                best_audio_url = ""
+                best_audio_id = ""
+                for f in d.get('adaptiveFormats', []):
+                    ftype = f.get('type', '')
+                    if 'audio' in ftype:
+                        bitrate = f.get('bitrate', 128000)
+                        ext = 'm4a' if 'mp4' in ftype else 'webm'
+                        direct_url = f.get('url', '')
+                        if not direct_url:
+                            continue
+                        if not best_audio_url:
+                            best_audio_url = direct_url
+                            best_audio_id = str(f.get('itag', 'audio'))
+                        audio_only_list.append({
+                            "format_id": str(f.get('itag', 'audio')),
+                            "ext": ext,
+                            "quality_label": f"{int(int(bitrate)/1000)} kbps",
+                            "bitrate": int(int(bitrate)/1000),
+                            "filesize": int(f.get('clen')) if f.get('clen') and str(f.get('clen')).isdigit() else None,
+                            "filesize_formatted": format_filesize(int(f.get('clen'))) if f.get('clen') and str(f.get('clen')).isdigit() else "High Quality",
+                            "direct_url": direct_url,
+                            "type": "audio"
+                        })
+
+                # Video adaptiveFormats (Merged)
+                seen_res = set()
+                for f in d.get('adaptiveFormats', []):
+                    ftype = f.get('type', '')
+                    if 'video' in ftype:
+                        res_label = f.get('qualityLabel') or f.get('resolution') or 'Video'
+                        if res_label in seen_res:
+                            continue
+                        seen_res.add(res_label)
+                        direct_url = f.get('url', '')
+                        if not direct_url:
+                            continue
+                        ext = 'mp4' if 'mp4' in ftype else 'webm'
+                        video_merged_list.append({
+                            "format_id": str(f.get('itag', 'vid')),
+                            "audio_id": best_audio_id or "audio",
+                            "ext": ext,
+                            "resolution": res_label,
+                            "filesize": int(f.get('clen')) if f.get('clen') and str(f.get('clen')).isdigit() else None,
+                            "filesize_formatted": format_filesize(int(f.get('clen'))) if f.get('clen') and str(f.get('clen')).isdigit() else "HD Stream",
+                            "direct_url": direct_url,
+                            "audio_url": best_audio_url,
+                            "is_merge": True,
+                            "note": f"Merged {ext.upper()}"
+                        })
+
+                return {
+                    "id": vid_id,
+                    "title": title,
+                    "description": f"YouTube video by {uploader}",
+                    "thumbnail": best_thumb,
+                    "duration": int(duration) if str(duration).isdigit() else 0,
+                    "duration_formatted": format_duration(int(duration)) if str(duration).isdigit() else "Video",
+                    "uploader": uploader,
+                    "view_count": int(views) if views and str(views).isdigit() else None,
+                    "platform": {
+                        "key": "youtube",
+                        "name": "YouTube",
+                        "icon": "fab fa-youtube",
+                        "color": "#FF0000",
+                        "matched": True
+                    },
+                    "preview_stream_url": progressive_list[0]['direct_url'] if progressive_list else (video_merged_list[0]['direct_url'] if video_merged_list else ""),
+                    "formats": {
+                        "progressive": progressive_list,
+                        "video_merged": video_merged_list,
+                        "audio_only": audio_only_list
+                    }
+                }
+        except Exception:
+            continue
+    raise RuntimeError("Failed to resolve YouTube video via fallback instances")
+
 def extract_media(url: str) -> Dict[str, Any]:
     """
     Extracts rich media metadata and categorized formats with high-speed caching
@@ -379,8 +508,18 @@ def extract_media(url: str) -> Dict[str, Any]:
         METADATA_CACHE[clean_url] = (now, result)
         return result
 
-    ydl = get_ydl_instance()
-    info = ydl.extract_info(clean_url, download=False)
+    try:
+        ydl = get_ydl_instance()
+        info = ydl.extract_info(clean_url, download=False)
+    except Exception as e:
+        if platform_info["key"] == "youtube":
+            try:
+                result = extract_youtube_fallback(clean_url)
+                METADATA_CACHE[clean_url] = (now, result)
+                return result
+            except Exception:
+                pass
+        raise e
     
     if 'entries' in info and info['entries']:
         info = info['entries'][0]
