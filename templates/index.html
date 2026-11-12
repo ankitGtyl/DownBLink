@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DownBLink | All-in-One Video Downloader & Player</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+  <!-- Google Fonts: Outfit & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            neon: {
+              DEFAULT: '#00FF87',
+              hover: '#00E676',
+              glow: 'rgba(0, 255, 135, 0.4)',
+              subtle: 'rgba(0, 255, 135, 0.12)'
+            },
+            obsidian: {
+              950: '#050807',
+              900: '#070A08',
+              800: '#0D1310',
+              700: '#131D18',
+              600: '#1C2B24'
+            }
+          },
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome 6 CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Plyr Video Player CSS CDN -->
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body class="bg-ambient min-h-screen flex flex-col cyber-grid">
+
+  <!-- Navbar -->
+  <header class="w-full border-b border-[#16241D] bg-[#070A08]/90 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+
+      <!-- Logo Branding -->
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="w-11 h-11 relative flex items-center justify-center transition-transform group-hover:scale-105">
+          <img src="/static/logo.svg" alt="DBL Logo"
+            class="w-full h-full object-contain filter drop-shadow-[0_0_12px_rgba(0,255,135,0.4)]">
+        </div>
+        <div class="flex flex-col">
+          <span class="text-2xl font-black tracking-tight text-white flex items-center">
+            Down<span class="text-neon neon-text-glow">BLink</span>
+          </span>
+          <span class="text-[10px] tracking-widest text-[#8E9E96] font-mono uppercase -mt-1 font-semibold">
+            Universal Media Engine
+          </span>
+        </div>
+      </a>
+
+      <!-- Navigation & Status Badge -->
+      <div class="flex items-center gap-4">
+        <div
+          class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0D1410] border border-[#16241D] text-xs text-[#8E9E96]">
+          <span class="w-2 h-2 rounded-full bg-neon animate-pulse"></span>
+          <span class="font-medium text-white">Engine Online</span>
+          <span class="text-neutral-500">|</span>
+          <span>1,000+ Sites Supported</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-10 space-y-12">
+
+    <!-- Hero Section -->
+    <section class="text-center space-y-4 pt-4">
+      <div
+        class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#0D1410] border border-[#16241D] text-xs font-semibold text-neon mb-2">
+        <i class="fas fa-bolt"></i> Fast • Free • High Definition Up to 4K
+      </div>
+      <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white max-w-3xl mx-auto leading-tight">
+        DownBLink <span class="text-transparent bg-clip-text bg-gradient-to-r from-neon to-emerald-400">Media
+          Player</span> & Downloader
+      </h1>
+      <p class="text-[#8E9E96] text-base sm:text-lg max-w-2xl mx-auto">
+        Paste any video link from YouTube, Instagram, TikTok, TeraBox, X, Reddit & 1,000+ sites. Instantly stream with
+        full YouTube-style controls or download in 1 click.
+      </p>
+    </section>
+
+    <!-- Search / URL Input Box -->
+    <section class="max-w-3xl mx-auto w-full">
+      <form id="extract-form" class="relative group">
+
+        <!-- Glowing aura under box -->
+        <div
+          class="absolute -inset-1 bg-gradient-to-r from-neon via-emerald-500 to-green-600 rounded-2xl blur-lg opacity-25 group-hover:opacity-40 transition duration-500">
+        </div>
+
+        <div
+          class="relative flex flex-col sm:flex-row items-stretch bg-[#0A0E0C] border-2 border-[#16241D] focus-within:border-neon rounded-2xl p-2 gap-2 shadow-2xl transition duration-300">
+
+          <!-- Auto-detected Platform Indicator Tag inside Input -->
+          <div id="platform-badge"
+            class="hidden flex items-center gap-2 px-3 py-1 bg-[#131D18] border border-[#1F3328] rounded-xl self-center text-xs font-semibold text-white ml-1">
+            <i id="platform-icon" class="fas fa-globe text-neon"></i>
+            <span id="platform-name">Detected</span>
+          </div>
+
+          <!-- Input Text Field -->
+          <div class="flex-1 relative flex items-center">
+            <i class="fas fa-link text-[#8E9E96] ml-3 mr-2 text-sm"></i>
+            <input type="text" id="url-input"
+              placeholder="Paste video link here (e.g. YouTube, TikTok, Reels, Twitter)..." required autocomplete="off"
+              class="w-full bg-transparent text-white placeholder-[#5A6E64] text-sm sm:text-base outline-none pr-8 py-2 font-medium" />
+            <button type="button" id="clear-btn"
+              class="hidden absolute right-2 text-[#5A6E64] hover:text-white transition p-1 text-sm"
+              title="Clear input">
+              <i class="fas fa-times-circle"></i>
+            </button>
+          </div>
+
+          <!-- Action Buttons Group -->
+          <div class="flex items-center gap-2">
+            <button type="button" id="paste-btn"
+              class="px-4 py-3 bg-[#131D18] hover:bg-[#1A2922] text-[#8E9E96] hover:text-white border border-[#1E3026] rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap"
+              title="Paste from clipboard">
+              <i class="fas fa-paste text-neon"></i>
+              <span class="hidden sm:inline">Paste</span>
+            </button>
+
+            <button type="submit" id="submit-btn"
+              class="btn-neon px-6 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition whitespace-nowrap">
+              <span>Get Video</span>
+              <i class="fas fa-arrow-down"></i>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Supported Platforms Strip -->
+      <div class="mt-5 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-[#5A6E64] font-medium">
+        <span>Supported:</span>
+        <span class="flex items-center gap-1.5 hover:text-white transition cursor-default"><i
+            class="fas fa-cube text-[#00B0FF]"></i> TeraBox</span>
+        <span class="flex items-center gap-1.5 hover:text-white transition cursor-default"><i
+            class="fas fa-compact-disc text-neon"></i> DiskWala</span>
+        <span class="flex items-center gap-1.5 hover:text-white transition cursor-default"><i
+            class="fab fa-youtube text-red-500"></i> YouTube</span>
+        <span class="flex items-center gap-1.5 hover:text-white transition cursor-default"><i
+            class="fab fa-instagram text-pink-500"></i> Instagram</span>
+        <span class="flex items-center gap-1.5 hover:text-white transition cursor-default"><i
+            class="fab fa-tiktok text-cyan-400"></i> TikTok</span>
+        <span class="flex items-center gap-1.5 hover:text-white transition cursor-default"><i
+            class="fab fa-x-twitter text-white"></i> X</span>
+        <span class="flex items-center gap-1.5 hover:text-white transition cursor-default"><i
+            class="fab fa-facebook text-blue-500"></i> Facebook</span>
+        <span class="flex items-center gap-1.5 hover:text-white transition cursor-default"><i
+            class="fab fa-reddit text-orange-500"></i> Reddit</span>
+        <span class="flex items-center gap-1.5 hover:text-white transition cursor-default"><i
+            class="fab fa-vimeo text-sky-400"></i> Vimeo</span>
+        <span class="flex items-center gap-1.5 hover:text-white transition cursor-default"><i
+            class="fas fa-plus text-neon"></i> 1000+ more</span>
+      </div>
+    </section>
+
+    <!-- Loading Skeleton Section -->
+    <div id="loader-section" class="hidden max-w-3xl mx-auto text-center py-12 space-y-4">
+      <div class="w-16 h-16 border-4 border-[#16241D] border-t-neon rounded-full animate-spin mx-auto"></div>
+      <h3 class="text-lg font-bold text-white">Extracting Media Metadata...</h3>
+      <p class="text-xs text-[#8E9E96]">Analyzing stream links, audio channels, and available resolutions</p>
+    </div>
+
+    <!-- Error Toast / Section -->
+    <div id="error-section"
+      class="hidden max-w-3xl mx-auto p-4 bg-red-950/40 border border-red-500/40 rounded-2xl flex items-center gap-3 text-red-200">
+      <i class="fas fa-exclamation-triangle text-red-400 text-lg"></i>
+      <span id="error-message" class="text-sm font-medium">An error occurred while fetching video.</span>
+    </div>
+
+    <!-- Extraction Result Section -->
+    <section id="result-section" class="hidden space-y-8 animate-fade-in">
+
+      <!-- Video Details & Player Box -->
+      <div class="glass-panel rounded-2xl p-6 border border-[#16241D] space-y-6">
+
+        <!-- Player and Info Flex Container (Toggles layout in Theater Mode) -->
+        <div id="player-and-details" class="flex flex-col lg:flex-row items-start gap-6 transition-all duration-300">
+
+          <!-- Left: DownBLink Web Media Player -->
+          <div id="player-container" class="lg:w-7/12 w-full transition-all duration-300">
+
+            <!-- Player Top Toolbar -->
+            <div class="flex items-center justify-between mb-2.5 px-1">
+              <div class="flex items-center gap-2">
+                <span
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-[#0D1410] border border-[#16241D] text-neon shadow-sm">
+                  <span class="w-2 h-2 rounded-full bg-neon animate-pulse"></span>
+                  <span>DownBLink Player</span>
+                </span>
+                <span id="player-platform-badge"
+                  class="text-xs px-2 py-0.5 rounded bg-emerald-950/80 text-neon font-semibold border border-neon/30 flex items-center gap-1">
+                  <i class="fas fa-play text-[10px]"></i>
+                  <span>Ready</span>
+                </span>
+              </div>
+
+              <!-- Top Player Utility Controls -->
+              <div class="flex items-center gap-1.5">
+                <button type="button" id="btn-shortcuts-modal"
+                  class="p-1.5 px-2.5 rounded-lg text-xs font-semibold bg-[#101713] hover:bg-[#18241E] text-[#8E9E96] hover:text-white border border-[#16241D] flex items-center gap-1.5 transition"
+                  title="YouTube Keyboard Shortcuts (?)">
+                  <i class="fas fa-keyboard text-neon text-xs"></i>
+                  <span class="hidden sm:inline">Shortcuts</span>
+                </button>
+                <button type="button" id="btn-pip-toggle"
+                  class="p-1.5 px-2.5 rounded-lg text-xs font-semibold bg-[#101713] hover:bg-[#18241E] text-[#8E9E96] hover:text-white border border-[#16241D] flex items-center gap-1.5 transition"
+                  title="Picture-in-Picture Miniplayer (P)">
+                  <i class="fas fa-external-link-alt text-xs"></i>
+                  <span class="hidden sm:inline">PiP</span>
+                </button>
+                <button type="button" id="btn-theater-toggle"
+                  class="p-1.5 px-2.5 rounded-lg text-xs font-semibold bg-[#101713] hover:bg-[#18241E] text-[#8E9E96] hover:text-white border border-[#16241D] flex items-center gap-1.5 transition"
+                  title="Theater Mode (T)">
+                  <i id="theater-icon" class="fas fa-expand text-xs text-neon"></i>
+                  <span id="theater-text" class="hidden sm:inline">Theater</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Video Player Frame with Double-Click Seek Overlays -->
+            <div id="player-frame-box" class="player-frame-box relative select-none">
+              <video id="main-video-player" playsinline controls preload="auto" class="w-full"></video>
+
+              <!-- Double Click Ripple Overlay - Left (-10s) -->
+              <div id="skip-overlay-left"
+                class="pointer-events-none absolute left-0 top-0 bottom-0 w-1/3 flex items-center justify-center opacity-0 transition-opacity duration-300 z-30">
+                <div
+                  class="bg-black/80 backdrop-blur-md text-neon px-4 py-2 rounded-full font-black text-sm flex items-center gap-2 border border-neon/40 shadow-2xl">
+                  <i class="fas fa-backward text-xs"></i>
+                  <span>-10s</span>
+                </div>
+              </div>
+
+              <!-- Double Click Ripple Overlay - Right (+10s) -->
+              <div id="skip-overlay-right"
+                class="pointer-events-none absolute right-0 top-0 bottom-0 w-1/3 flex items-center justify-center opacity-0 transition-opacity duration-300 z-30">
+                <div
+                  class="bg-black/80 backdrop-blur-md text-neon px-4 py-2 rounded-full font-black text-sm flex items-center gap-2 border border-neon/40 shadow-2xl">
+                  <span>+10s</span>
+                  <i class="fas fa-forward text-xs"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Player Status & Keyboard Hints Footer -->
+            <div class="mt-2.5 flex flex-wrap items-center justify-between text-xs text-[#5A6E64] px-1 gap-2">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1.5 text-[#8E9E96]">
+                  <i class="fas fa-sliders-h text-neon"></i>
+                  <span id="player-active-mode">Standard 16:9 View</span>
+                </span>
+                <span class="text-neutral-700">•</span>
+                <span class="flex items-center gap-1.5">
+                  <i class="fas fa-tachometer-alt text-neon"></i>
+                  <span>Speed: <b id="player-speed-indicator" class="text-white">1x</b></span>
+                </span>
+              </div>
+              <div class="hidden sm:flex items-center gap-2 text-[11px] text-[#4E6257]">
+                <span><kbd class="px-1.5 py-0.5 bg-[#0F1612] rounded border border-[#16241D] text-[#8E9E96]">Space</kbd>
+                  Play</span>
+                <span><kbd
+                    class="px-1.5 py-0.5 bg-[#0F1612] rounded border border-[#16241D] text-[#8E9E96]">J</kbd>/<kbd
+                    class="px-1.5 py-0.5 bg-[#0F1612] rounded border border-[#16241D] text-[#8E9E96]">L</kbd>
+                  ±10s</span>
+                <span><kbd class="px-1.5 py-0.5 bg-[#0F1612] rounded border border-[#16241D] text-[#8E9E96]">M</kbd>
+                  Mute</span>
+                <span><kbd class="px-1.5 py-0.5 bg-[#0F1612] rounded border border-[#16241D] text-[#8E9E96]">T</kbd>
+                  Theater</span>
+                <span><kbd class="px-1.5 py-0.5 bg-[#0F1612] rounded border border-[#16241D] text-[#8E9E96]">F</kbd>
+                  Fullscreen</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Video Metadata & Quick Specs -->
+          <div id="details-container"
+            class="lg:w-5/12 w-full flex flex-col justify-between space-y-4 transition-all duration-300">
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <span id="video-platform-tag"
+                  class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-emerald-950 text-neon border border-neon/30">
+                  Platform
+                </span>
+                <span class="text-xs text-[#8E9E96] font-mono flex items-center gap-1">
+                  <i class="fas fa-clock"></i> <span id="video-duration">0:00</span>
+                </span>
+              </div>
+
+              <h2 id="video-title" class="text-lg sm:text-xl font-bold text-white line-clamp-3 leading-snug">
+                Video Title Placeholder
+              </h2>
+
+              <div class="text-xs text-[#8E9E96] space-y-1">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-user-circle text-neon"></i>
+                  <span id="video-uploader" class="text-white font-medium">Creator</span>
+                </div>
+                <div id="video-views" class="text-[11px] text-[#5A6E64]"></div>
+              </div>
+
+              <!-- Quick Action Pills: Thumbnail & QR Code Transfer -->
+              <div class="flex flex-wrap items-center gap-2 pt-2">
+                <button type="button" id="btn-download-thumb"
+                  class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#131D18] hover:bg-[#1A2922] text-[#00FF87] border border-neon/40 flex items-center gap-1.5 transition shadow-sm hover:shadow-[0_0_12px_rgba(0,255,135,0.25)]">
+                  <i class="fas fa-image"></i>
+                  <span>Download Thumbnail (HD)</span>
+                </button>
+                <button type="button" id="btn-quick-qr"
+                  class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#131D18] hover:bg-[#1A2922] text-[#00FF87] border border-neon/40 flex items-center gap-1.5 transition shadow-sm hover:shadow-[0_0_12px_rgba(0,255,135,0.25)]">
+                  <i class="fas fa-qrcode"></i>
+                  <span>Send to Phone (QR)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Download Tabs Header -->
+            <div class="space-y-3 pt-4 border-t border-[#16241D]">
+              <div class="text-xs font-bold uppercase tracking-wider text-[#8E9E96]">Select Format & Quality:</div>
+              <div class="flex rounded-xl bg-[#0A0E0C] p-1 border border-[#16241D] gap-1">
+                <button type="button" id="tab-video"
+                  class="tab-btn active flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5">
+                  <i class="fas fa-video"></i>
+                  <span>Video (MP4)</span>
+                </button>
+                <button type="button" id="tab-audio"
+                  class="tab-btn flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-[#8E9E96] hover:text-white">
+                  <i class="fas fa-music"></i>
+                  <span>Audio (MP3)</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Download Tabs & Format Filter Header -->
+        <div class="space-y-4 pt-4 border-t border-[#16241D]">
+
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#8E9E96]">
+              <i class="fas fa-layer-group text-neon"></i>
+              <span>Available Downloads:</span>
+            </div>
+
+            <!-- Format & Quality Filter Pills Bar -->
+            <div id="filter-pills-bar" class="flex flex-wrap items-center gap-1.5">
+              <!-- Dynamically populated filter buttons (All, MP4, WEBM, 1080p+ HD, etc.) -->
+            </div>
+          </div>
+
+          <div id="list-video" class="space-y-2.5 max-h-96 overflow-y-auto pr-1">
+            <!-- Dynamic video rows inserted here -->
+          </div>
+          <div id="list-audio" class="hidden space-y-2.5 max-h-96 overflow-y-auto pr-1">
+            <!-- Dynamic audio rows inserted here -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- Features / Value Prop Grid -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+
+      <div class="glass-panel p-6 rounded-2xl border border-[#16241D] space-y-3">
+        <div
+          class="w-12 h-12 rounded-xl bg-[#0D1410] border border-[#16241D] flex items-center justify-center text-neon text-xl">
+          <i class="fas fa-magic"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Smart Auto-Detection</h3>
+        <p class="text-xs text-[#8E9E96] leading-relaxed">
+          Instantly recognizes the platform as soon as you paste the link. Zero manual configurations or setup needed.
+        </p>
+      </div>
+
+      <div class="glass-panel p-6 rounded-2xl border border-[#16241D] space-y-3">
+        <div
+          class="w-12 h-12 rounded-xl bg-[#0D1410] border border-[#16241D] flex items-center justify-center text-neon text-xl">
+          <i class="fas fa-layer-group"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Multiple Qualities</h3>
+        <p class="text-xs text-[#8E9E96] leading-relaxed">
+          Full HD 1080p, 2K, 4K, 720p, or extract clean 320kbps MP3 audio files. Auto-merges separate audio/video
+          streams instantly.
+        </p>
+      </div>
+
+      <div class="glass-panel p-6 rounded-2xl border border-[#16241D] space-y-3">
+        <div
+          class="w-12 h-12 rounded-xl bg-[#0D1410] border border-[#16241D] flex items-center justify-center text-neon text-xl">
+          <i class="fas fa-play"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">In-Browser Player</h3>
+        <p class="text-xs text-[#8E9E96] leading-relaxed">
+          Preview and watch videos directly on DownBLink with seek, volume, speed, and fullscreen support before
+          downloading.
+        </p>
+      </div>
+
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="glass-panel rounded-2xl p-6 sm:p-8 border border-[#16241D] space-y-4">
+      <h2 class="text-xl font-bold text-white flex items-center gap-2">
+        <i class="fas fa-question-circle text-neon"></i>
+        <span>Frequently Asked Questions</span>
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <div class="bg-[#0A0E0C] p-4 rounded-xl border border-[#16241D] space-y-1">
+          <h4 class="text-sm font-semibold text-white">Is DownBLink free to use?</h4>
+          <p class="text-xs text-[#8E9E96]">Yes, DownBLink is completely free with no registration or software download
+            required.</p>
+        </div>
+        <div class="bg-[#0A0E0C] p-4 rounded-xl border border-[#16241D] space-y-1">
+          <h4 class="text-sm font-semibold text-white">How does 1080p+ download work?</h4>
+          <p class="text-xs text-[#8E9E96]">High quality streams are processed and remuxed with their corresponding
+            audio stream using FFmpeg without quality loss.</p>
+        </div>
+        <div class="bg-[#0A0E0C] p-4 rounded-xl border border-[#16241D] space-y-1">
+          <h4 class="text-sm font-semibold text-white">Can I convert videos to MP3?</h4>
+          <p class="text-xs text-[#8E9E96]">Yes, switch to the "Audio (MP3)" tab to extract standalone high-fidelity
+            audio tracks.</p>
+        </div>
+        <div class="bg-[#0A0E0C] p-4 rounded-xl border border-[#16241D] space-y-1">
+          <h4 class="text-sm font-semibold text-white">Are DRM protected videos supported?</h4>
+          <p class="text-xs text-[#8E9E96]">No, subscription-locked DRM platforms (e.g. Netflix, Disney+) are not
+            supported. Only publicly accessible media can be retrieved.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Download Progress Modal -->
+  <div id="progress-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+    <div class="bg-[#0D1411] border-2 border-[#16241D] rounded-2xl p-6 max-w-md w-full space-y-5 shadow-2xl relative">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#131D18] flex items-center justify-center text-neon border border-neon/30">
+          <i class="fas fa-spinner fa-spin text-lg"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">Preparing Your Download</h3>
+          <p id="progress-status" class="text-xs text-[#8E9E96]">Processing video and audio tracks...</p>
+        </div>
+      </div>
+
+      <!-- Progress Bar Container -->
+      <div class="space-y-2">
+        <div class="flex justify-between text-xs font-mono">
+          <span class="text-[#8E9E96]">Progress</span>
+          <span id="progress-percent" class="text-neon font-bold">10%</span>
+        </div>
+        <div class="w-full bg-[#070A08] h-3 rounded-full overflow-hidden border border-[#16241D]">
+          <div id="progress-bar"
+            class="h-full bg-gradient-to-r from-neon to-emerald-400 rounded-full transition-all duration-300"
+            style="width: 10%;"></div>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button type="button" id="progress-cancel-btn"
+          class="px-4 py-2 bg-[#131D18] hover:bg-[#1A2821] text-xs font-semibold text-[#8E9E96] hover:text-white rounded-lg transition border border-[#16241D]">
+          Dismiss
+        </button>
+      </div>
+      <div id="modal-qr-container" class="hidden pt-2 border-t border-[#16241D]">
+        <button type="button" id="modal-qr-transfer-btn"
+          class="w-full py-2.5 rounded-xl text-xs font-bold btn-neon flex items-center justify-center gap-2 transition shadow-lg shadow-[#00FF87]/20">
+          <i class="fas fa-qrcode"></i>
+          <span>Send Downloaded Video to Phone (QR Code)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Code Phone Transfer Modal -->
+  <div id="qr-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+    <div
+      class="glass-panel w-full max-w-md rounded-2xl p-6 border-2 border-neon/30 shadow-[0_0_50px_rgba(0,255,135,0.2)] space-y-5">
+
+      <div class="flex items-center justify-between border-b border-[#16241D] pb-3">
+        <div class="flex items-center gap-2.5">
+          <div
+            class="w-8 h-8 rounded-lg bg-emerald-950 text-neon flex items-center justify-center text-sm border border-neon/30">
+            <i class="fas fa-qrcode"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Send Video to Phone</h3>
+            <p class="text-[11px] text-[#8E9E96]">Scan to stream or download instantly</p>
+          </div>
+        </div>
+        <button type="button" id="qr-close-btn" class="text-[#8E9E96] hover:text-white transition p-1 text-sm">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- QR Code Display Box -->
+      <div class="flex flex-col items-center justify-center space-y-3 py-2">
+        <div class="p-3 bg-white rounded-2xl shadow-2xl border-4 border-[#00FF87]">
+          <div id="qr-container" class="w-48 h-48 flex items-center justify-center">
+            <img id="qr-img" src="" alt="QR Code" class="w-48 h-48 object-contain">
+          </div>
+        </div>
+        <p class="text-xs text-center text-[#8E9E96] max-w-xs">
+          Open your phone's <span class="text-white font-semibold">Camera</span> or <span
+            class="text-white font-semibold">Google Lens</span> and point it at the code.
+        </p>
+      </div>
+
+      <!-- Link URL & Copy Box -->
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-mono text-[#5A6E64] uppercase tracking-wider">Direct Download Link</label>
+        <div class="flex items-center gap-2 bg-[#0A0E0C] border border-[#16241D] rounded-xl p-1.5 pl-3">
+          <input type="text" id="qr-link-input" readonly
+            class="flex-1 bg-transparent text-xs text-neutral-300 font-mono outline-none truncate">
+          <button type="button" id="qr-copy-btn"
+            class="px-3 py-1.5 rounded-lg bg-[#131D18] hover:bg-[#1A2922] text-[#00FF87] border border-neon/30 text-xs font-semibold flex items-center gap-1 transition">
+            <i class="fas fa-copy"></i>
+            <span>Copy</span>
+          </button>
+        </div>
+        <p class="text-[10px] text-[#5A6E64] flex items-center gap-1 pt-1">
+          <i class="fas fa-wifi text-neon text-[10px]"></i>
+          <span>Make sure your phone is connected to the same Wi-Fi network.</span>
+        </p>
+      </div>
+
+      <div class="pt-2">
+        <button type="button" id="qr-done-btn" class="w-full py-2.5 rounded-xl text-xs font-bold btn-neon transition">
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- YouTube Keyboard Shortcuts Modal -->
+  <div id="shortcuts-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+    <div
+      class="glass-panel w-full max-w-lg rounded-2xl p-6 border-2 border-neon/30 shadow-[0_0_50px_rgba(0,255,135,0.2)] space-y-5">
+
+      <div class="flex items-center justify-between border-b border-[#16241D] pb-3">
+        <div class="flex items-center gap-2.5">
+          <div
+            class="w-8 h-8 rounded-lg bg-emerald-950 text-neon flex items-center justify-center text-sm border border-neon/30">
+            <i class="fas fa-keyboard"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">DownBLink Player Shortcuts</h3>
+            <p class="text-[11px] text-[#8E9E96]">Full YouTube-compatible keyboard controls</p>
+          </div>
+        </div>
+        <button type="button" id="shortcuts-close-btn" class="text-[#8E9E96] hover:text-white transition p-1 text-sm">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Shortcuts Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs max-h-[60vh] overflow-y-auto pr-1">
+
+        <!-- Playback Group -->
+        <div class="space-y-2 p-3 bg-[#0A0E0C] rounded-xl border border-[#16241D]">
+          <div class="text-[11px] font-bold uppercase text-neon tracking-wider">Playback</div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#8E9E96]">Play / Pause</span>
+            <span class="flex gap-1"><kbd
+                class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">Space</kbd>
+              or <kbd
+                class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">K</kbd></span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#8E9E96]">Rewind 10 Seconds</span>
+            <kbd
+              class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">J</kbd>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#8E9E96]">Forward 10 Seconds</span>
+            <kbd
+              class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">L</kbd>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#8E9E96]">Seek ±5 Seconds</span>
+            <span class="flex gap-1"><kbd
+                class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">←</kbd>
+              <kbd
+                class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">→</kbd></span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#8E9E96]">Restart Video</span>
+            <kbd
+              class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">0</kbd>
+          </div>
+        </div>
+
+        <!-- Volume & Audio -->
+        <div class="space-y-2 p-3 bg-[#0A0E0C] rounded-xl border border-[#16241D]">
+          <div class="text-[11px] font-bold uppercase text-neon tracking-wider">Audio & Volume</div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#8E9E96]">Mute / Unmute</span>
+            <kbd
+              class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">M</kbd>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#8E9E96]">Volume Up (5%)</span>
+            <kbd
+              class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">↑</kbd>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#8E9E96]">Volume Down (5%)</span>
+            <kbd
+              class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">↓</kbd>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#8E9E96]">Speed Up</span>
+            <kbd
+              class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">&gt;</kbd>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#8E9E96]">Slow Down</span>
+            <kbd
+              class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">&lt;</kbd>
+          </div>
+        </div>
+
+        <!-- Display & Screen -->
+        <div class="space-y-2 p-3 bg-[#0A0E0C] rounded-xl border border-[#16241D] sm:col-span-2">
+          <div class="text-[11px] font-bold uppercase text-neon tracking-wider">Display & View Modes</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[#8E9E96]">Theater / Cinema Mode</span>
+              <kbd
+                class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">T</kbd>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-[#8E9E96]">Toggle Fullscreen</span>
+              <kbd
+                class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">F</kbd>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-[#8E9E96]">Picture-in-Picture (PiP)</span>
+              <kbd
+                class="px-1.5 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white font-mono text-[11px]">P</kbd>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-[#8E9E96]">Seek 10% - 90%</span>
+              <span class="text-[#8E9E96] font-mono"><kbd
+                  class="px-1 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white text-[11px]">1</kbd> to
+                <kbd
+                  class="px-1 py-0.5 rounded bg-[#131D18] border border-[#23382D] text-white text-[11px]">9</kbd></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-2">
+        <button type="button" id="shortcuts-done-btn"
+          class="w-full py-2.5 rounded-xl text-xs font-bold btn-neon transition">
+          Got It
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="w-full border-t border-[#16241D] bg-[#070A08] py-8 text-center text-xs text-[#5A6E64]">
+      <div class="max-w-7xl mx-auto px-4 space-y-3">
+        <div class="flex items-center justify-center gap-2 text-white font-bold text-sm">
+          <img src="/static/logo.svg" alt="DBL" class="w-5 h-5">
+          <span class="tracking-wide">DownBLink</span>
+        </div>
+        <p class="text-neutral-400">High performance universal video downloader & streaming media player.</p>
+        <div class="flex flex-wrap items-center justify-center gap-2 text-xs text-[#8E9E96]">
+          <span>&copy; <span id="current-year">2026</span> DownBLink. All rights reserved.</span>
+          <span class="hidden sm:inline text-neutral-700">•</span>
+          <span class="text-white font-medium flex items-center gap-1.5">
+            <i class="fas fa-shield-alt text-neon text-[11px]"></i>
+            <span>Maintained and Managed by <span class="text-neon font-bold">DownB</span></span>
+          </span>
+        </div>
+      </div>
+  </footer>
+
+  <!-- HLS.js CDN for live/adaptive stream playback -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <!-- Plyr Video Player JS CDN -->
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+  <!-- QRCode JS CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- App JS -->
+  <script src="/static/js/app.js"></script>
+</body>
+
+</html>
