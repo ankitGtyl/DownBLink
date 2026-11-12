@@ -47,6 +47,7 @@ def get_ydl_instance() -> yt_dlp.YoutubeDL:
             'extractor_args': {
                 'youtube': {
                     'player_client': ['android', 'ios'],
+                    'player_skip': ['webpage', 'configs'],
                 }
             },
         }

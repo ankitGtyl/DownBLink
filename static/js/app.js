@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Player
     const playerContainer = document.getElementById('player-container');
-    const videoPlayer = document.getElementById('main-video-player');
+    let videoPlayer = document.getElementById('main-video-player');
     let plyrInstance = null;
 
     // Tabs, Filter Bar & Lists
