@@ -43,11 +43,28 @@ async def extract_media_route(payload: ExtractRequest):
     if not clean_url:
         raise HTTPException(status_code=400, detail="Video URL is required")
     
+    # Pre-validate YouTube video ID completeness (all valid YouTube IDs are exactly 11 characters)
+    if "youtube.com" in clean_url or "youtu.be" in clean_url:
+        yt_match = re.search(r'(?:shorts/|v=|youtu\.be/|embed/)([a-zA-Z0-9_-]+)', clean_url)
+        if yt_match:
+            yt_id = yt_match.group(1)
+            if len(yt_id) < 11:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Incomplete YouTube link. YouTube video IDs must be exactly 11 characters (pasted '{yt_id}' is only {len(yt_id)} characters). Please copy the complete video link from YouTube."
+                )
+
     try:
         data = await asyncio.to_thread(extract_media, clean_url)
         return data
+    except HTTPException:
+        raise
     except Exception as e:
         error_msg = str(e)
+        if "404" in error_msg or "Not Found" in error_msg:
+            raise HTTPException(status_code=404, detail="Video not found. Please verify that the link is correct, public, and not deleted.")
+        if "429" in error_msg or "Too Many Requests" in error_msg:
+            raise HTTPException(status_code=429, detail="Host is temporarily rate-limiting requests. Please wait a few moments or try another video.")
         if "Incomplete YouTube ID" in error_msg or "truncated" in error_msg:
             raise HTTPException(status_code=400, detail="Incomplete or truncated video URL. Please make sure the full video link is pasted.")
         if "Unsupported URL" in error_msg:
